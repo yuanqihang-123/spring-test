@@ -13,16 +13,19 @@ import com.thoughtworks.rslist.repository.VoteRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
+/*使用mock进行测试是，不需要数据库配合，因此速度很快*/
 class RsServiceTest {
     RsService rsService;
 
@@ -199,6 +202,47 @@ class RsServiceTest {
                 .rank(1)
                 .tradeDto(tradeDto1)
                 .build());
+
+    }
+
+    @Test
+    void shouldBuyRsWithMoneyLessThanCurrentMoneyFail() {
+        // given
+        TradeDto tradeDto = TradeDto.builder().amount(11).rank(1).id(1).build();
+        UserDto userDto =
+                UserDto.builder()
+                        .voteNum(10)
+                        .phone("18888888888")
+                        .gender("female")
+                        .email("a@b.com")
+                        .age(19)
+                        .userName("xiaoli")
+                        .id(2)
+                        .build();
+        RsEventDto rsEventDto =
+                RsEventDto.builder()
+                        .eventName("event name")
+                        .id(3)
+                        .keyword("keyword")
+                        .voteNum(2)
+                        .rank(1)
+                        .tradeDto(tradeDto)
+                        .user(userDto)
+                        .build();
+        RsEventDto rsEventDto1 =
+                RsEventDto.builder()
+                        .eventName("猪肉涨价了")
+                        .id(4)
+                        .keyword("经济")
+                        .voteNum(2)
+                        .user(userDto)
+                        .build();
+        // when
+        //先给when，再调用，不然when不起作用
+        when(rsEventRepository.findByRank(anyInt())).thenReturn(rsEventDto);
+
+        // then
+        assertEquals(ResponseEntity.status(400).build(),rsService.buy(trade, rsEventDto1.getId()));
 
     }
 
