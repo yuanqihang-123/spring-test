@@ -1,8 +1,10 @@
 package com.thoughtworks.rslist.repository;
 
+import com.thoughtworks.rslist.dto.RsEventDto;
 import com.thoughtworks.rslist.dto.TradeDto;
 import org.springframework.data.repository.CrudRepository;
 
 public interface TradeRepository extends CrudRepository<TradeDto, Integer> {
+    TradeDto findByRsEventDto(RsEventDto rsEventDto);
     TradeDto findByRank(int rank);
 }

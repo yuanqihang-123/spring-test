@@ -14,10 +14,14 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Table(name = "rsEvent")
 public class RsEventDto {
-  @Id @GeneratedValue private int id;
-  private String eventName;
-  private String keyword;
-  private int voteNum;
-  private int rank;
-  @ManyToOne @JoinColumn(name = "user_id") private UserDto user;
+    @Id
+    @GeneratedValue
+    private int id;
+    private String eventName;
+    private String keyword;
+    private int voteNum;
+    private int rank;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private UserDto user;
 }

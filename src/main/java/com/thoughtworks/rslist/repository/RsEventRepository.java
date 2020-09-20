@@ -7,9 +7,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 public interface RsEventRepository extends CrudRepository<RsEventDto, Integer> {
-  List<RsEventDto> findAll();
+    List<RsEventDto> findAll();
 
+    RsEventDto findByRank(int rank);
 
-  @Transactional
-  void deleteAllByUserId(int userId);
+    long deleteByRank(int rank);
+
+    @Transactional
+    void deleteAllByUserId(int userId);
 }

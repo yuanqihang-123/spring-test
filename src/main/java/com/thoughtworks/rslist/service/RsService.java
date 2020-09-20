@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.concurrent.Delayed;
 
 @Service
 public class RsService {
@@ -59,14 +60,24 @@ public class RsService {
     TradeDto tradeDto = tradeRepository.findByRank(trade.getRank());
     if (tradeDto == null) {
 //      更新rsEvent的rank
-      RsEventDto rsEventDto = rsEventRepository.findById(id).get();
-      rsEventDto.setRank(trade.getRank());
-      rsEventRepository.save(rsEventDto);
-//      增加tradeddto
-      TradeDto buildTradeDto = TradeDto.builder().amount(trade.getAmount()).rank(trade.getRank()).rsEventDto(rsEventDto).build();
-      tradeRepository.save(buildTradeDto);
-      return ResponseEntity.created(null).build();
+      return updateRsEventAndSaveTrade(trade, id);
+    }
+    if (trade.getAmount()>tradeDto.getAmount()){
+//      删除原rank上的热搜
+      rsEventRepository.deleteByRank(trade.getRank());
+
+//      购买成功
+      return updateRsEventAndSaveTrade(trade, id);
     }
     return null;
+  }
+
+  private ResponseEntity updateRsEventAndSaveTrade(Trade trade, int id) {
+    RsEventDto rsEventDto = rsEventRepository.findById(id).get();
+    rsEventDto.setRank(trade.getRank());
+    rsEventRepository.save(rsEventDto);
+    TradeDto buildTradeDto = TradeDto.builder().amount(trade.getAmount()).rank(trade.getRank()).rsEventDto(rsEventDto).build();
+    tradeRepository.save(buildTradeDto);
+    return ResponseEntity.created(null).build();
   }
 }

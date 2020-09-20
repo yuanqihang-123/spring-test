@@ -1,6 +1,7 @@
 package com.thoughtworks.rslist.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.thoughtworks.rslist.domain.RsEvent;
 import com.thoughtworks.rslist.domain.Trade;
 import com.thoughtworks.rslist.dto.RsEventDto;
 import com.thoughtworks.rslist.dto.TradeDto;
@@ -18,6 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import javax.management.relation.RelationServiceNotRegisteredException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -221,5 +223,35 @@ class RsControllerTest {
         assertEquals(newRsEvent.getEventName(), "第一条事件");
         assertEquals(newRsEvent.getRank(), trade.getRank());
 
+    }
+
+    @Test
+    public void shouldBuyRsWithMoneyMoreThanCurrentMoneySuccess() throws Exception {
+        UserDto save = userRepository.save(userDto);
+
+        RsEventDto rsEventDto = RsEventDto.builder().keyword("无分类").eventName("第一条事件").user(save).build();
+        rsEventRepository.save(rsEventDto);
+        RsEventDto rsEventDto1 = RsEventDto.builder().keyword("无分类").eventName("第二条事件").user(save).build();
+        rsEventRepository.save(rsEventDto1);
+
+        TradeDto tradeDto = TradeDto.builder().amount(10).rank(1).rsEventDto(rsEventDto).build();
+        tradeRepository.save(tradeDto);
+
+        Trade trade = Trade.builder().amount(11).rank(1).build();
+        String tradeJson = objectMapper.writeValueAsString(trade);
+        mockMvc.perform(
+                post("/rs/buy/{id}", rsEventDto1.getId())
+                        .content(tradeJson)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated());
+
+        RsEventDto rsEventByRank = rsEventRepository.findByRank(trade.getRank());
+        assertEquals("第二条事件", rsEventByRank.getEventName());
+        assertEquals("无分类", rsEventByRank.getKeyword());
+        assertEquals(1, rsEventByRank.getRank());
+        TradeDto tradeByRs = tradeRepository.findByRsEventDto(rsEventDto1);
+        assertEquals(11, tradeByRs.getAmount());
+        assertEquals(trade.getRank(), tradeByRs.getRank());
+        assertEquals(rsEventDto1.getId(), tradeByRs.getRsEventDto().getId());
     }
 }

@@ -1,6 +1,7 @@
 package com.thoughtworks.rslist.dto;
 
 import lombok.*;
+import org.hibernate.validator.constraints.UniqueElements;
 
 import javax.persistence.*;
 
