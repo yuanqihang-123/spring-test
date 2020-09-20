@@ -44,7 +44,7 @@ class RsServiceTest {
         rsService = new RsService(rsEventRepository, userRepository, voteRepository, tradeRepository);
         localDateTime = LocalDateTime.now();
         vote = Vote.builder().voteNum(2).rsEventId(1).time(localDateTime).userId(1).build();
-        trade = Trade.builder().amount(1).rank(1).build();
+        trade = Trade.builder().amount(10).rank(1).build();
     }
 
     @Test
@@ -146,4 +146,60 @@ class RsServiceTest {
                         .user(userDto)
                         .build());
     }
+
+    @Test
+    void shouldBuyRsWithMoneyMoreThanCurrentMoneySuccess() {
+        // given
+        TradeDto tradeDto = TradeDto.builder().amount(5).rank(1).id(1).build();
+        UserDto userDto =
+                UserDto.builder()
+                        .voteNum(10)
+                        .phone("18888888888")
+                        .gender("female")
+                        .email("a@b.com")
+                        .age(19)
+                        .userName("xiaoli")
+                        .id(2)
+                        .build();
+        RsEventDto rsEventDto =
+                RsEventDto.builder()
+                        .eventName("event name")
+                        .id(3)
+                        .keyword("keyword")
+                        .voteNum(2)
+                        .rank(1)
+                        .tradeDto(tradeDto)
+                        .user(userDto)
+                        .build();
+        RsEventDto rsEventDto1 =
+                RsEventDto.builder()
+                        .eventName("猪肉涨价了")
+                        .id(4)
+                        .keyword("经济")
+                        .voteNum(2)
+                        .user(userDto)
+                        .build();
+
+        // when
+        when(rsEventRepository.findByRank(anyInt())).thenReturn(rsEventDto);
+        when(rsEventRepository.findById(anyInt())).thenReturn(Optional.of(rsEventDto1));
+        //先给when，再调用，不然when不起作用
+        rsService.buy(trade, rsEventDto1.getId());
+        // then
+
+        verify(rsEventRepository).delete(rsEventDto);
+        TradeDto tradeDto1 = TradeDto.builder().amount(trade.getAmount()).rank(trade.getRank()).build();
+        verify(tradeRepository).save(tradeDto1);
+        verify(rsEventRepository).save(RsEventDto.builder()
+                .eventName("猪肉涨价了")
+                .id(4)
+                .keyword("经济")
+                .voteNum(2)
+                .user(userDto)
+                .rank(1)
+                .tradeDto(tradeDto1)
+                .build());
+
+    }
+
 }
