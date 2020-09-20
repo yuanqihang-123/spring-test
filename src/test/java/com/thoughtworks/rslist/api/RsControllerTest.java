@@ -75,17 +75,61 @@ class RsControllerTest {
         UserDto save = userRepository.save(userDto);
 
         RsEventDto rsEventDto =
-                RsEventDto.builder().keyword("无分类").eventName("第一条事件").user(save).build();
-
+                RsEventDto.builder().keyword("无分类").eventName("第二条事件").user(save).build();
         rsEventRepository.save(rsEventDto);
+        rsEventDto =
+                RsEventDto.builder().keyword("无分类").eventName("第一条事件").user(save).rank(1).build();
+        rsEventRepository.save(rsEventDto);
+
 
         mockMvc
                 .perform(get("/rs/list"))
-                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$", hasSize(2)))
                 .andExpect(jsonPath("$[0].eventName", is("第一条事件")))
                 .andExpect(jsonPath("$[0].keyword", is("无分类")))
                 .andExpect(jsonPath("$[0]", not(hasKey("user"))))
+                .andExpect(jsonPath("$[0].rank", not(hasKey(1))))
+                .andExpect(jsonPath("$[1].eventName", is("第二条事件")))
+                .andExpect(jsonPath("$[1].keyword", is("无分类")))
+                .andExpect(jsonPath("$[1].rank", is(0)))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    public void shouldGetRsListBetween() throws Exception {
+        UserDto save = userRepository.save(userDto);
+
+        RsEventDto rsEventDto =
+                RsEventDto.builder().keyword("无分类").eventName("第一条事件").user(save).voteNum(3).build();
+
+        rsEventRepository.save(rsEventDto);
+        rsEventDto = RsEventDto.builder().keyword("无分类").eventName("第二条事件").user(save).voteNum(5).build();
+        rsEventRepository.save(rsEventDto);
+        rsEventDto = RsEventDto.builder().keyword("无分类").eventName("第三条事件").user(save).rank(1).build();
+        rsEventRepository.save(rsEventDto);
+        mockMvc
+                .perform(get("/rs/list?start=1&end=2"))
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].eventName", is("第三条事件")))
+                .andExpect(jsonPath("$[0].keyword", is("无分类")))
+                .andExpect(jsonPath("$[1].eventName", is("第二条事件")))
+                .andExpect(jsonPath("$[1].keyword", is("无分类")));
+        mockMvc
+                .perform(get("/rs/list?start=2&end=3"))
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].eventName", is("第二条事件")))
+                .andExpect(jsonPath("$[0].keyword", is("无分类")))
+                .andExpect(jsonPath("$[1].eventName", is("第一条事件")))
+                .andExpect(jsonPath("$[1].keyword", is("无分类")));
+        mockMvc
+                .perform(get("/rs/list?start=1&end=3"))
+                .andExpect(jsonPath("$", hasSize(3)))
+                .andExpect(jsonPath("$[0].keyword", is("无分类")))
+                .andExpect(jsonPath("$[0].eventName", is("第三条事件")))
+                .andExpect(jsonPath("$[1].eventName", is("第二条事件")))
+                .andExpect(jsonPath("$[1].keyword", is("无分类")))
+                .andExpect(jsonPath("$[2].eventName", is("第一条事件")))
+                .andExpect(jsonPath("$[2].keyword", is("无分类")));
     }
 
     @Test
@@ -112,41 +156,6 @@ class RsControllerTest {
                 .andExpect(jsonPath("$.error", is("invalid index")));
     }
 
-    @Test
-    public void shouldGetRsListBetween() throws Exception {
-        UserDto save = userRepository.save(userDto);
-
-        RsEventDto rsEventDto =
-                RsEventDto.builder().keyword("无分类").eventName("第一条事件").user(save).build();
-
-        rsEventRepository.save(rsEventDto);
-        rsEventDto = RsEventDto.builder().keyword("无分类").eventName("第二条事件").user(save).build();
-        rsEventRepository.save(rsEventDto);
-        rsEventDto = RsEventDto.builder().keyword("无分类").eventName("第三条事件").user(save).build();
-        rsEventRepository.save(rsEventDto);
-        mockMvc
-                .perform(get("/rs/list?start=1&end=2"))
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].eventName", is("第一条事件")))
-                .andExpect(jsonPath("$[0].keyword", is("无分类")))
-                .andExpect(jsonPath("$[1].eventName", is("第二条事件")))
-                .andExpect(jsonPath("$[1].keyword", is("无分类")));
-        mockMvc
-                .perform(get("/rs/list?start=2&end=3"))
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].eventName", is("第二条事件")))
-                .andExpect(jsonPath("$[0].keyword", is("无分类")))
-                .andExpect(jsonPath("$[1].eventName", is("第三条事件")))
-                .andExpect(jsonPath("$[1].keyword", is("无分类")));
-        mockMvc
-                .perform(get("/rs/list?start=1&end=3"))
-                .andExpect(jsonPath("$", hasSize(3)))
-                .andExpect(jsonPath("$[0].keyword", is("无分类")))
-                .andExpect(jsonPath("$[1].eventName", is("第二条事件")))
-                .andExpect(jsonPath("$[1].keyword", is("无分类")))
-                .andExpect(jsonPath("$[2].eventName", is("第三条事件")))
-                .andExpect(jsonPath("$[2].keyword", is("无分类")));
-    }
 
     @Test
     public void shouldAddRsEventWhenUserExist() throws Exception {
@@ -217,7 +226,7 @@ class RsControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated());
 
-        TradeDto tradeDto = tradeRepository.findByAmountAndRank(10,1);
+        TradeDto tradeDto = tradeRepository.findByAmountAndRank(10, 1);
         RsEventDto newRsEvent = rsEventRepository.findById(rsEventDto.getId()).get();
         assertEquals(tradeDto.getAmount(), 10);
         assertEquals(tradeDto.getRank(), 1);
