@@ -24,4 +24,7 @@ public class RsEventDto {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private UserDto user;
+    @OneToOne
+    @JoinColumn(name = "trade_id",referencedColumnName = "id")
+    private TradeDto tradeDto;
 }

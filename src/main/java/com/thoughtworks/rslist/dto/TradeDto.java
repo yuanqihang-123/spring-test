@@ -18,7 +18,5 @@ public class TradeDto {
     private Integer id;
     private int amount;
     private int rank;
-    @OneToOne
-    @JoinColumn(name = "rsEventDto_id",referencedColumnName = "id")
-    private RsEventDto rsEventDto;
+
 }

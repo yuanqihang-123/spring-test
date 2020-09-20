@@ -7,6 +7,5 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface TradeRepository extends CrudRepository<TradeDto, Integer> {
     TradeDto findByAmountAndRank(int amount,int rank);
-    TradeDto findByRsEventDto(RsEventDto rsEventDto);
     TradeDto findByRank(int rank);
 }

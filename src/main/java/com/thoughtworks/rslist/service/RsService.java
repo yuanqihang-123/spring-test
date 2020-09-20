@@ -57,14 +57,14 @@ public class RsService {
 
   public ResponseEntity buy(Trade trade, int id) {
 //      此排名上的热搜没有人购买
-    TradeDto tradeDto = tradeRepository.findByRank(trade.getRank());
-    if (tradeDto == null) {
+    RsEventDto rsEventDto = rsEventRepository.findByRank(trade.getRank());
+    if (rsEventDto == null) {
 //      更新rsEvent的rank
       return updateRsEventAndSaveTrade(trade, id);
     }
-    if (trade.getAmount()>tradeDto.getAmount()){
+    if (trade.getAmount()>rsEventDto.getTradeDto().getAmount()){
 //      删除原rank上的热搜
-      rsEventRepository.deleteByRank(trade.getRank());
+      rsEventRepository.delete(rsEventDto);
 
 //      购买成功
       return updateRsEventAndSaveTrade(trade, id);
@@ -73,11 +73,12 @@ public class RsService {
   }
 
   private ResponseEntity updateRsEventAndSaveTrade(Trade trade, int id) {
+    TradeDto buildTradeDto = TradeDto.builder().amount(trade.getAmount()).rank(trade.getRank()).build();
+    tradeRepository.save(buildTradeDto);
     RsEventDto rsEventDto = rsEventRepository.findById(id).get();
     rsEventDto.setRank(trade.getRank());
+    rsEventDto.setTradeDto(buildTradeDto);
     rsEventRepository.save(rsEventDto);
-    TradeDto buildTradeDto = TradeDto.builder().amount(trade.getAmount()).rank(trade.getRank()).rsEventDto(rsEventDto).build();
-    tradeRepository.save(buildTradeDto);
     return ResponseEntity.created(null).build();
   }
 }

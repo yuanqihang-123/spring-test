@@ -54,9 +54,9 @@ class RsControllerTest {
 
     @BeforeEach
     void setUp() {
-        tradeRepository.deleteAll();
         voteRepository.deleteAll();
         rsEventRepository.deleteAll();
+        tradeRepository.deleteAll();
         userRepository.deleteAll();
         objectMapper = new ObjectMapper();
         userDto =
@@ -239,13 +239,13 @@ class RsControllerTest {
     public void shouldBuyRsWithMoneyMoreThanCurrentMoneySuccess() throws Exception {
         UserDto save = userRepository.save(userDto);
 
-        RsEventDto rsEventDto = RsEventDto.builder().keyword("无分类").eventName("第一条事件").user(save).build();
+        TradeDto tradeDto = TradeDto.builder().amount(10).rank(1).build();
+        tradeRepository.save(tradeDto);
+        RsEventDto rsEventDto = RsEventDto.builder().keyword("无分类").eventName("第一条事件").user(save).rank(1).tradeDto(tradeDto).build();
         rsEventRepository.save(rsEventDto);
+
         RsEventDto rsEventDto1 = RsEventDto.builder().keyword("无分类").eventName("第二条事件").user(save).build();
         rsEventRepository.save(rsEventDto1);
-
-        TradeDto tradeDto = TradeDto.builder().amount(10).rank(1).rsEventDto(rsEventDto).build();
-        tradeRepository.save(tradeDto);
 
         Trade trade = Trade.builder().amount(11).rank(1).build();
         String tradeJson = objectMapper.writeValueAsString(trade);
@@ -259,23 +259,24 @@ class RsControllerTest {
         assertEquals("第二条事件", rsEventByRank.getEventName());
         assertEquals("无分类", rsEventByRank.getKeyword());
         assertEquals(1, rsEventByRank.getRank());
-        TradeDto tradeByRs = tradeRepository.findByRsEventDto(rsEventDto1);
+        TradeDto tradeByRs = rsEventByRank.getTradeDto();
         assertEquals(11, tradeByRs.getAmount());
         assertEquals(trade.getRank(), tradeByRs.getRank());
-        assertEquals(rsEventDto1.getId(), tradeByRs.getRsEventDto().getId());
     }
 
     @Test
     public void shouldBuyRsWithMoneyLessThanCurrentMoneyFail() throws Exception {
         UserDto save = userRepository.save(userDto);
 
-        RsEventDto rsEventDto = RsEventDto.builder().keyword("无分类").eventName("第一条事件").user(save).build();
+        TradeDto tradeDto = TradeDto.builder().amount(10).rank(1).build();
+        tradeRepository.save(tradeDto);
+        RsEventDto rsEventDto = RsEventDto.builder().keyword("无分类").eventName("第一条事件").user(save).rank(1).tradeDto(tradeDto).build();
         rsEventRepository.save(rsEventDto);
+
         RsEventDto rsEventDto1 = RsEventDto.builder().keyword("无分类").eventName("第二条事件").user(save).build();
         rsEventRepository.save(rsEventDto1);
 
-        TradeDto tradeDto = TradeDto.builder().amount(10).rank(1).rsEventDto(rsEventDto).build();
-        tradeRepository.save(tradeDto);
+
 
         Trade trade = Trade.builder().amount(9).rank(1).build();
         String tradeJson = objectMapper.writeValueAsString(trade);
