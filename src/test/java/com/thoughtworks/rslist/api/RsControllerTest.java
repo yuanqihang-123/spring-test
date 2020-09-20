@@ -254,4 +254,25 @@ class RsControllerTest {
         assertEquals(trade.getRank(), tradeByRs.getRank());
         assertEquals(rsEventDto1.getId(), tradeByRs.getRsEventDto().getId());
     }
+
+    @Test
+    public void shouldBuyRsWithMoneyLessThanCurrentMoneyFail() throws Exception {
+        UserDto save = userRepository.save(userDto);
+
+        RsEventDto rsEventDto = RsEventDto.builder().keyword("无分类").eventName("第一条事件").user(save).build();
+        rsEventRepository.save(rsEventDto);
+        RsEventDto rsEventDto1 = RsEventDto.builder().keyword("无分类").eventName("第二条事件").user(save).build();
+        rsEventRepository.save(rsEventDto1);
+
+        TradeDto tradeDto = TradeDto.builder().amount(10).rank(1).rsEventDto(rsEventDto).build();
+        tradeRepository.save(tradeDto);
+
+        Trade trade = Trade.builder().amount(9).rank(1).build();
+        String tradeJson = objectMapper.writeValueAsString(trade);
+        mockMvc.perform(
+                post("/rs/buy/{id}", rsEventDto1.getId())
+                        .content(tradeJson)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is(400));
+    }
 }

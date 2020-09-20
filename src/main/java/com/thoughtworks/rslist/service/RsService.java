@@ -69,7 +69,7 @@ public class RsService {
 //      购买成功
       return updateRsEventAndSaveTrade(trade, id);
     }
-    return null;
+    return ResponseEntity.status(400).build();
   }
 
   private ResponseEntity updateRsEventAndSaveTrade(Trade trade, int id) {
