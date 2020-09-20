@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 
 import javax.management.relation.RelationServiceNotRegisteredException;
@@ -36,6 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+//@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class RsControllerTest {
     @Autowired
     private MockMvc mockMvc;
@@ -52,10 +54,10 @@ class RsControllerTest {
 
     @BeforeEach
     void setUp() {
+        tradeRepository.deleteAll();
         voteRepository.deleteAll();
         rsEventRepository.deleteAll();
         userRepository.deleteAll();
-        tradeRepository.deleteAll();
         objectMapper = new ObjectMapper();
         userDto =
                 UserDto.builder()
@@ -215,11 +217,10 @@ class RsControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated());
 
-        TradeDto tradeDto = tradeRepository.findById(3).get();
+        TradeDto tradeDto = tradeRepository.findByAmountAndRank(10,1);
         RsEventDto newRsEvent = rsEventRepository.findById(rsEventDto.getId()).get();
         assertEquals(tradeDto.getAmount(), 10);
         assertEquals(tradeDto.getRank(), 1);
-        assertEquals(tradeDto.getRsEventDto().getId(), 2);
         assertEquals(newRsEvent.getEventName(), "第一条事件");
         assertEquals(newRsEvent.getRank(), trade.getRank());
 
